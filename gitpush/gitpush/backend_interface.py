@@ -462,44 +462,43 @@ def git_push(token: str, repo: str, branch: str, filepaths: list, conflict_strat
             ).stdout
             print(f"DEBUG: Git status: {status_result}", file=sys.stderr)
             
-            try:
-                # 尝试合并远程分支
-                run_cmd(["git", "merge", f"origin/{branch}", "--no-ff", "--allow-unrelated-histories", "-m", f"Merge remote changes into {branch}"], cwd=workdir)
+            merge_ok = False
+            merge_proc = subprocess.run(
+                ["git", "merge", f"origin/{branch}", "--no-ff", "--allow-unrelated-histories", "-m", f"Merge remote changes into {branch}"],
+                cwd=workdir,
+                capture_output=True,
+                text=True
+            )
+            if merge_proc.returncode == 0:
+                merge_ok = True
                 print(f"DEBUG: Merge successful, now pushing", file=sys.stderr)
-            except Exception as merge_error:
-                print(f"DEBUG: Merge failed, trying pull with auto-merge: {merge_error}", file=sys.stderr)
-                
-                try:
-                    # 尝试使用pull命令，它会自动执行fetch和merge
-                    run_cmd(["git", "pull", "origin", branch, "--no-ff", "--allow-unrelated-histories"], cwd=workdir)
-                    print(f"DEBUG: Pull with auto-merge successful", file=sys.stderr)
-                except Exception as pull_error:
-                    print(f"DEBUG: Pull failed, checking for conflicts: {pull_error}", file=sys.stderr)
-                    
-                    # 检查是否有合并冲突
-                    conflicts = subprocess.run(
-                        ["git", "status", "--porcelain"], 
-                        cwd=workdir, 
-                        capture_output=True, 
+            else:
+                print(f"DEBUG: Merge failed, stdout: {merge_proc.stdout}, stderr: {merge_proc.stderr}", file=sys.stderr)
+                # 尝试 pull --rebase
+                pull_proc = subprocess.run(
+                    ["git", "pull", "origin", branch, "--rebase"],
+                    cwd=workdir,
+                    capture_output=True,
+                    text=True
+                )
+                if pull_proc.returncode == 0:
+                    merge_ok = True
+                    print(f"DEBUG: Pull --rebase successful", file=sys.stderr)
+                else:
+                    print(f"DEBUG: Pull --rebase failed, stdout: {pull_proc.stdout}, stderr: {pull_proc.stderr}", file=sys.stderr)
+                    # 最后尝试强制推送
+                    force_proc = subprocess.run(
+                        ["git", "push", "-u", "origin", branch, "--force-with-lease"],
+                        cwd=workdir,
+                        capture_output=True,
                         text=True
-                    ).stdout
-                    
-                    if "UU" in conflicts or "AA" in conflicts:
-                        # 有合并冲突，需要手动解决
-                        print(f"DEBUG: Merge conflicts found, trying alternative approach", file=sys.stderr)
-                        
-                        # 尝试重置到合并前的状态
-                        run_cmd(["git", "reset", "--hard", "HEAD"], cwd=workdir)
-                        
-                        # 使用rebase代替merge
-                        try:
-                            run_cmd(["git", "pull", "origin", branch, "--rebase"], cwd=workdir)
-                            print(f"DEBUG: Rebase successful", file=sys.stderr)
-                        except Exception as rebase_error:
-                            # 所有合并方式都失败，尝试强制推送（保留本地更改）
-                            print(f"DEBUG: All merge/rebase attempts failed, using force push: {rebase_error}", file=sys.stderr)
-                            run_cmd(["git", "push", "-u", "origin", branch, "--force"], cwd=workdir)
-                            print(f"DEBUG: Force push successful", file=sys.stderr)
+                    )
+                    if force_proc.returncode == 0:
+                        merge_ok = True
+                        print(f"DEBUG: Force-with-lease push successful", file=sys.stderr)
+                    else:
+                        print(f"DEBUG: Force-with-lease push failed, stdout: {force_proc.stdout}, stderr: {force_proc.stderr}", file=sys.stderr)
+                        fail(f"Merge/pull failed: {merge_proc.stderr or pull_proc.stderr or 'unknown error'}")
         
         # 推送本地更改
         run_cmd(["git", "push", "-u", "origin", branch], cwd=workdir)
