@@ -1,0 +1,8 @@
+from fastapi import APIRouter
+from app.api.v1.endpoints import health, file, git
+
+api_router = APIRouter()
+
+api_router.include_router(health.router, tags=["health"])
+api_router.include_router(file.router, prefix="/file", tags=["file"])
+api_router.include_router(git.router, prefix="/git", tags=["git"])
