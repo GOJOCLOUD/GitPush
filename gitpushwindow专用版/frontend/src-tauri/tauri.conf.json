@@ -1,0 +1,123 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GitPush",
+  "version": "0.1.0",
+  "identifier": "com.gojo.gitpush",
+  "build": {
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "GitPush",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 600,
+        "minHeight": 500,
+        "center": true,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "theme": "system"
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    },
+    "macOSPrivateApi": false
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../../backend": "backend"
+    },
+    "createUpdaterArtifacts": true,
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "wix": {
+        "language": ["zh-CN", "en-US"],
+        "template": "main.wxs",
+        "fragmentPaths": [],
+        "componentGroupRefs": [],
+        "componentRefs": [],
+        "featureGroupRefs": [],
+        "featureRefs": [],
+        "mergeRefs": [],
+        "skipWebviewInstall": false,
+        "license": null,
+        "enableElevatedUpdateTask": true
+      },
+      "nsis": {
+        "displayLanguageSelector": true,
+        "languages": ["SimpChinese", "English"],
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "installMode": "perMachine",
+        "allowDowngrades": true,
+        "deleteAppDataOnUninstall": false,
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true,
+        "shortcutName": "GitPush",
+        "installerHook": "installer.nsh",
+        "compressionLevel": "ultra",
+        "allowToChangeInstallationDirectory": true,
+        "include": "nsis-installer.nsh"
+      },
+      "fileAssociations": [
+        {
+          "ext": "gitpush",
+          "name": "GitPush Project",
+          "description": "GitPush Project File",
+          "role": "Editor"
+        }
+      ],
+      "protocol": [
+        {
+          "name": "gitpush",
+          "schemes": ["gitpush"],
+          "role": "Editor"
+        }
+      ]
+    },
+    "deb": {
+      "depends": []
+    },
+    "appimage": {
+      "bundleMediaFramework": false
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": ["https://releases.tauri.app/{{current_version}}"],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ5MEM0MzI3MEM2QjU1NjVFMUEwNjAwMkVGQjQ0M0M0NQpSV1dGa2pYV2pHT2tZV05sc2Y0bEhSdzlKZ3pLQ2V3UHlJc0VZc2hVTVZISWlJUk5ZQzVqClRTUjJZWEJ6YVc5emRHRnVaM0J2YlRZPQ=="
+    },
+    "deepLink": {
+      "protocols": [
+        {
+          "scheme": "gitpush",
+          "role": "Editor"
+        }
+      ]
+    }
+  }
+}
